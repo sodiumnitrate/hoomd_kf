@@ -1,0 +1,11 @@
+__pycache__/
+.Python
+eggs/
+.eggs/
+*.egg-info
+build/
+dist/
+*/__pycache__/
+.pytest_cache
+*/htmlcov/
+.*swp
