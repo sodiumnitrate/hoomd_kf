@@ -37,3 +37,27 @@ def check_adjacency(adjacency):
         return False
 
     return True
+
+def slice_to_indices(key, n_el):
+    """
+    Function that converts a slice object to a list of
+    indices.
+    """
+    assert isinstance(key, slice)
+
+    if key.step is None:
+        step = 1
+    else:
+        step = key.step
+
+    if key.start is None:
+        start = 0
+    else:
+        start = key.start
+
+    if key.stop is None:
+        stop = n_el
+    else:
+        stop = key.stop
+
+    return list(range(start, stop, step))

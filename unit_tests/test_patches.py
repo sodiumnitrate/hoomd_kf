@@ -1,7 +1,43 @@
+from unittest.mock import patch
 from hoomd_kf.patches import Patches
 from hoomd_kf.patch import Patch
 
 class TestPatches:
+    def test_getitem_1(self):
+        patch_1 = Patch()
+        patch_2 = Patch()
+        patch_3 = Patch()
+        patch_4 = Patch()
+
+        patches_obj = Patches(list_of_patches=[patch_1, patch_2, patch_3, patch_4])
+
+        patch = patches_obj[3]
+        assert isinstance(patch, Patch)
+
+    def test_getitem_2(self):
+        patch_1 = Patch()
+        patch_2 = Patch()
+        patch_3 = Patch()
+        patch_4 = Patch()
+
+        patches_obj = Patches(list_of_patches=[patch_1, patch_2, patch_3, patch_4])
+
+        patches = patches_obj[:3]
+        assert isinstance(patches, Patches)
+        assert patches.n_patch == 3
+
+    def test_getitem_3(self):
+        patch_1 = Patch()
+        patch_2 = Patch()
+        patch_3 = Patch()
+        patch_4 = Patch()
+
+        patches_obj = Patches(list_of_patches=[patch_1, patch_2, patch_3, patch_4])
+
+        patches = patches_obj[:3]
+        assert isinstance(patches, Patches)
+        assert patches.n_patch == 3
+
     def test_adjacency(self):
         patch_1 = Patch()
         patch_2 = Patch()

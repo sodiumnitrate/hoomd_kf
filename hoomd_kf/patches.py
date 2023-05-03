@@ -5,7 +5,7 @@ See: https://hoomd-blue.readthedocs.io/en/latest/tutorial/07-Modelling-Patchy-Pa
 """
 import numpy as np
 from hoomd_kf.patch import Patch
-from hoomd_kf.utils import check_adjacency
+from hoomd_kf.utils import check_adjacency, slice_to_indices
 
 
 class Patches:
@@ -23,6 +23,26 @@ class Patches:
             self.n_patch = len(self.list_of_patches)
             self.check_data()
             self.check_patch_indices()
+
+    def __getitem__(self, key):
+        """
+        Overload __getitem__ so that you can slice into Patches.
+        """
+        if isinstance(key, slice):
+            indices = slice_to_indices(key, len(self.list_of_patches))
+            new_list = [self.list_of_patches[ii] for ii in list(indices)]
+            new_patches = Patches(list_of_patches=new_list)
+            new_patches.n_patch = len(new_list)
+            return new_patches
+        elif isinstance(key, int):
+            return self.list_of_patches[key]
+        elif isinstance(key, tuple):
+            new_list = [self.list_of_patches[ii] for ii in key]
+            new_patches = Patches(list_of_patches=new_list)
+            new_patches.n_patch = len(new_list)
+            return new_patches
+        else:
+            raise TypeError
 
     def check_data(self):
         """
