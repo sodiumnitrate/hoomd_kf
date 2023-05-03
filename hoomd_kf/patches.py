@@ -5,6 +5,7 @@ See: https://hoomd-blue.readthedocs.io/en/latest/tutorial/07-Modelling-Patchy-Pa
 """
 import numpy as np
 from hoomd_kf.patch import Patch
+from hoomd_kf.utils import check_adjacency
 
 
 class Patches:
@@ -36,7 +37,10 @@ class Patches:
         Checks that each patch has a unique index.
         """
         indices = []
-        for patch_i in self.list_of_patches:
+        for i, patch_i in enumerate(self.list_of_patches):
+            if patch_i.patch_type is None:
+                patch_i.patch_type = i
+                continue
             if patch_i.patch_type not in indices:
                 indices.append(patch_i.patch_type)
             else:
@@ -50,13 +54,16 @@ class Patches:
         """
         adjacency_matrix = np.array(adjacency_matrix)
 
+        if not check_adjacency(adjacency_matrix):
+            return
+
         # clean interaction lists
         for i in range(self.n_patch):
             self.list_of_patches[i].interacts_with = []
 
         # set interaction lists based on the adjacency matrix provided
         for i in range(self.n_patch):
-            for j in range(i + 1, self.n_patch):
+            for j in range(i, self.n_patch):
                 if adjacency_matrix[i, j] == 1:
                     if j not in self.list_of_patches[i].interacts_with:
                         self.list_of_patches[i].interacts_with.append(j)

@@ -35,6 +35,7 @@ class Patch:
         """
         if self.delta is None and self.cos_delta is None:
             print("WARNING: patch angular width not provided.")
+            return
 
         if self.delta is None:
             self.delta = np.arccos(self.cos_delta)
