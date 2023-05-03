@@ -16,7 +16,8 @@ class Patch:
                  delta=None,
                  epsilon=None,
                  interacts_with=[],
-                 patch_type=None):
+                 patch_type=None,
+                 vec=[1,0,0]):
         """
         Initialize the Patch object.
         """
@@ -26,6 +27,7 @@ class Patch:
         self.interacts_with = interacts_with
         self.patch_type = patch_type
         self.epsilon = epsilon
+        self.vec = vec
 
         self.check_angular_width()
 

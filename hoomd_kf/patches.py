@@ -3,9 +3,11 @@ This file contains the Patches class that holds a list of Patch objects.
 Has the ability to generate C++ code to be compiled by hoomd.hpmc.
 See: https://hoomd-blue.readthedocs.io/en/latest/tutorial/07-Modelling-Patchy-Particles/02-Simulating-a-System-of-Patchy-Particles.html
 """
+from cmath import cos
+from unittest.mock import patch
 import numpy as np
 from hoomd_kf.patch import Patch
-from hoomd_kf.utils import check_adjacency, slice_to_indices
+from hoomd_kf.utils import check_adjacency, generate_patch_geometry, slice_to_indices
 
 
 class Patches:
@@ -28,6 +30,7 @@ class Patches:
         """
         Overload __getitem__ so that you can slice into Patches.
         """
+        # TODO: update patch indices?
         if isinstance(key, slice):
             indices = slice_to_indices(key, len(self.list_of_patches))
             new_list = [self.list_of_patches[ii] for ii in list(indices)]
@@ -97,3 +100,69 @@ class Patches:
         """
         adjacency = np.ones((self.n_patch, self.n_patch))
         self.set_adjacency(adjacency)
+
+    def generate_patches_from_geometry(self,
+                                       n_patches,
+                                       kf_lambda=1.1,
+                                       epsilon=1,
+                                       cos_delta=0.92,
+                                       theta=None):
+        """
+        Function that uses utils.generate_patch_geometry() to 
+        create a list of patches.
+        """
+        vecs = generate_patch_geometry(n_patches, theta=theta)
+        patch_list = []
+        for i in range(n_patches):
+            vec = vecs[i]
+            patch = Patch(kf_lambda=kf_lambda,
+                          cos_delta=cos_delta,
+                          epsilon=epsilon,
+                          patch_type=i,
+                          vec=vec)
+            patch_list.append(patch)
+
+        self.n_patch = n_patches
+        self.list_of_patches = patch_list
+        self.make_all_patches_interact_with_each_other()
+
+    def generate_simple_tetrahedral(self,
+                                    kf_lambda=1.1,
+                                    epsilon=1,
+                                    cos_delta=0.92):
+        """
+        Function to populate Patches object with a set of tetrahedral
+        patches that interact with each other.
+        """
+        self.generate_patches_from_geometry(4,
+                                            kf_lambda=kf_lambda,
+                                            epsilon=epsilon,
+                                            cos_delta=cos_delta)
+
+    def generate_simple_trivalent(self,
+                                  kf_lambda=1.1,
+                                  epsilon=1,
+                                  cos_delta=0.92):
+        """
+        Function to populate Patches object with patches such that
+        3 patches equally spaced around the equator is are created.
+        """
+        self.generate_patches_from_geometry(3,
+                                            kf_lambda=kf_lambda,
+                                            epsilon=epsilon,
+                                            cos_delta=cos_delta)
+
+    def generate_bivalent(self,
+                          kf_lambda=1.1,
+                          epsilon=1,
+                          cos_delta=0.92,
+                          theta=None):
+        """
+        Function to populate Patches object with two patches separated
+        by theta. If theta is None, the patches are separated by pi.
+        """
+        self.generate_patches_from_geometry(2,
+                                            kf_lambda=kf_lambda,
+                                            epsilon=epsilon,
+                                            cos_delta=cos_delta,
+                                            theta=theta)
