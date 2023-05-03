@@ -3,8 +3,6 @@ This file contains the Patches class that holds a list of Patch objects.
 Has the ability to generate C++ code to be compiled by hoomd.hpmc.
 See: https://hoomd-blue.readthedocs.io/en/latest/tutorial/07-Modelling-Patchy-Particles/02-Simulating-a-System-of-Patchy-Particles.html
 """
-from cmath import cos
-from unittest.mock import patch
 import numpy as np
 from hoomd_kf.patch import Patch
 from hoomd_kf.utils import check_adjacency, generate_patch_geometry, slice_to_indices
@@ -20,30 +18,50 @@ class Patches:
         Initialize the Patches object.
         """
         self.list_of_patches = list_of_patches
-        self.n_patch = None
         if self.list_of_patches:
-            self.n_patch = len(self.list_of_patches)
             self.check_data()
             self.check_patch_indices()
+
+    def __len__(self):
+        """
+        Function to return the number of patches.
+        """
+        return len(self.list_of_patches)
 
     def __getitem__(self, key):
         """
         Overload __getitem__ so that you can slice into Patches.
         """
-        # TODO: update patch indices?
+        # TODO: update patch indices and list of interactions
         if isinstance(key, slice):
             indices = slice_to_indices(key, len(self.list_of_patches))
             new_list = [self.list_of_patches[ii] for ii in list(indices)]
             new_patches = Patches(list_of_patches=new_list)
-            new_patches.n_patch = len(new_list)
             return new_patches
         elif isinstance(key, int):
             return self.list_of_patches[key]
         elif isinstance(key, tuple):
             new_list = [self.list_of_patches[ii] for ii in key]
             new_patches = Patches(list_of_patches=new_list)
-            new_patches.n_patch = len(new_list)
             return new_patches
+        else:
+            raise TypeError
+
+    def __add__(self, to_be_added):
+        """
+        Function that can be used to merge two Patches objects,
+        or to add a new Patch to Patches.
+        """
+        if isinstance(to_be_added, Patches):
+            # we have a Patches object
+            n_to_add = len(to_be_added)
+            for patch in to_be_added:
+                for i in range(len(patch.interacts_with)):
+                    patch.interacts_with[i] += n_to_add
+            self.list_of_patches += to_be_added
+        elif isinstance(to_be_added, Patch):
+            # we have a Patch object
+            self.list_of_patches.append(to_be_added)
         else:
             raise TypeError
 
@@ -81,12 +99,12 @@ class Patches:
             return
 
         # clean interaction lists
-        for i in range(self.n_patch):
+        for i in range(len(self)):
             self.list_of_patches[i].interacts_with = []
 
         # set interaction lists based on the adjacency matrix provided
-        for i in range(self.n_patch):
-            for j in range(i, self.n_patch):
+        for i in range(len(self)):
+            for j in range(i, len(self)):
                 if adjacency_matrix[i, j] == 1:
                     if j not in self.list_of_patches[i].interacts_with:
                         self.list_of_patches[i].interacts_with.append(j)
@@ -98,7 +116,7 @@ class Patches:
         Function that sets patch adjacency such that they all interact
         with each other.
         """
-        adjacency = np.ones((self.n_patch, self.n_patch))
+        adjacency = np.ones((len(self), len(self)))
         self.set_adjacency(adjacency)
 
     def generate_patches_from_geometry(self,
@@ -122,7 +140,6 @@ class Patches:
                           vec=vec)
             patch_list.append(patch)
 
-        self.n_patch = n_patches
         self.list_of_patches = patch_list
         self.make_all_patches_interact_with_each_other()
 
@@ -166,3 +183,17 @@ class Patches:
                                             epsilon=epsilon,
                                             cos_delta=cos_delta,
                                             theta=theta)
+
+
+    def get_adjacency_from_patch_info(self):
+        """
+        Function that goes through the list of interactions for all
+        patches and creates an adjacency matrix.
+        """
+        n_patch = len(self)
+        adjacency = np.zeros((n_patch, n_patch))
+        for i, patch in enumerate(self.list_of_patches):
+            for j in patch.interacts_with:
+                adjacency[i,j] = 1
+
+        return adjacency

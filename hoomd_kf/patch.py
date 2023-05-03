@@ -3,7 +3,6 @@ This file holds the Patch class and related methods.
 """
 import numpy as np
 
-
 class Patch:
     """
     Patch object contains parameters and interaction information
@@ -20,20 +19,28 @@ class Patch:
                  vec=[1,0,0]):
         """
         Initialize the Patch object.
+
+        kf_lambda -> range of square well interaction in units of diameter. Always > 1.
+        cos_delta -> cos of angular width of patch
+        delta -> angular width of patch
+        interacts_with -> list of patches (in terms of indices within a patches object) the patch interacts with
+        epsilon -> depth of the square well attraction
+        vec -> vector that positions the patch on the particle.
         """
         self.kf_lambda = kf_lambda
         self.cos_delta = cos_delta
         self.delta = delta
         self.interacts_with = interacts_with
-        self.patch_type = patch_type
         self.epsilon = epsilon
+        self.patch_type = patch_type
         self.vec = vec
 
         self.check_angular_width()
+        self.check_range()
 
     def check_angular_width(self):
         """
-        Function to check the range of
+        Function to check the provided angular width, if any.
         """
         if self.delta is None and self.cos_delta is None:
             print("WARNING: patch angular width not provided.")
@@ -52,3 +59,29 @@ class Patch:
         if self.kf_lambda is not None:
             if self.kf_lambda <= 1:
                 print(f"WARNING: patch range = {self.kf_lambda} <= 1:")
+
+    def single_bond_per_patch(self):
+        """
+        Function to check whether the given patch range and angular
+        width allows for only one bond per patch.
+        """
+        if self.kf_lambda is None:
+            print("ERROR: I need kf_lambda to check single-bond-per-patch.")
+            return False
+        
+        if self.delta is None and self.cos_delta is None:
+            print("ERROR: I need a patch angular width to check single-bond-per-patch.")
+            return False
+
+        if self.cos_delta is None:
+            sin_delta = np.sin(self.delta)
+
+        if self.delta is None:
+            sin_delta = np.sin(np.acos(self.cos_delta))
+
+        sin_delta = np.sin(self.delta)
+        
+        if sin_delta <= 1/(2*self.kf_lambda):
+            return True
+        else:
+            return False
