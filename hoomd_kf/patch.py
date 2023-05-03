@@ -38,6 +38,33 @@ class Patch:
         self.check_angular_width()
         self.check_range()
 
+    def __repr__(self):
+        """
+        __repr__ function for Patch object.
+        """
+        return f"<Patch object of type {self.patch_type} at {hex(id(self))}>"
+
+    def __str__(self):
+        """
+        __str__ function for Patch object.
+        """
+        return f"Patch object of type {self.patch_type}."
+
+    def print_info(self):
+        """
+        Function to print patch info.
+        """
+        print(f"lambda:\t{self.kf_lambda}")
+        print(f"cos_delta:\t{self.cos_delta}")
+        print(f"epsilon:\t{self.epsilon}")
+        print(f"patch type:\t{self.patch_type}")
+        print(f"vec:\t({self.vec[0]}, {self.vec[1]}, {self.vec[2]})")
+        interacts_with_string = "interacts with:\t"
+        for i in self.interacts_with:
+            interacts_with_string += f"{i},"
+        interacts_with_string = interacts_with_string.strip(',')
+        print(interacts_with_string)
+
     def check_angular_width(self):
         """
         Function to check the provided angular width, if any.

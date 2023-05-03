@@ -24,11 +24,35 @@ class PatchySystem:
         self.num_particles = num_particles
         self.density = density
         self.patches = patches
+        if self.patches is not None:
+            assert isinstance(self.patches, Patches)
         self.particle_types = particle_types
 
         self.snapshot = None
         
         self.check_particle_types()
+
+    def __repr__(self):
+        """
+        __repr__ function for the PatchySystem object.
+        """
+        return f"<PatchySystem object with {self.num_particles} particles at {hex(id(self))}.>"
+
+    def __str__(self):
+        """
+        __str__ function for the PatchySystem object.
+        """
+        return f"PatchySystem with {self.num_particles} particles."
+
+    def print_info(self):
+        """
+        Function to print system information.
+        """
+        print(f"PatchySystem with {self.num_particles} particles:")
+        print("-------------------------------")
+        print(f"density:\t{self.density}")
+        print(f"number of patches:\t{len(self.patches)}")
+        print(f"number of particle types:\t{len(self.particle_types.keys())}")
 
     def check_particle_types(self):
         """

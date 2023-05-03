@@ -3,6 +3,7 @@ This file contains the Patches class that holds a list of Patch objects.
 Has the ability to generate C++ code to be compiled by hoomd.hpmc.
 See: https://hoomd-blue.readthedocs.io/en/latest/tutorial/07-Modelling-Patchy-Particles/02-Simulating-a-System-of-Patchy-Particles.html
 """
+import copy
 import numpy as np
 from hoomd_kf.patch import Patch
 from hoomd_kf.utils import check_adjacency, generate_patch_geometry, slice_to_indices
@@ -32,20 +33,45 @@ class Patches:
         """
         Overload __getitem__ so that you can slice into Patches.
         """
-        # TODO: update patch indices and list of interactions
+        # TODO: do I want copy.copy in all?
         if isinstance(key, slice):
             indices = slice_to_indices(key, len(self.list_of_patches))
-            new_list = [self.list_of_patches[ii] for ii in list(indices)]
+            new_list = [copy.copy(self.list_of_patches[ii]) for ii in list(indices)]
             new_patches = Patches(list_of_patches=new_list)
+            new_patches.update_interaction_indices(list(indices))
             return new_patches
         elif isinstance(key, int):
-            return self.list_of_patches[key]
+            return copy.copy(self.list_of_patches[key])
         elif isinstance(key, tuple):
-            new_list = [self.list_of_patches[ii] for ii in key]
+            new_list = [copy.copy(self.list_of_patches[ii]) for ii in key]
             new_patches = Patches(list_of_patches=new_list)
+            new_patches.update_interaction_indices(key)
             return new_patches
         else:
             raise TypeError
+
+    def __repr__(self):
+        """
+        __repr__ function for Patches object.
+        """
+        return f"<Patches object of size {len(self)} at {hex(id(self))}>"
+
+    def __str__(self):
+        """
+        __str__ function for Patches object.
+        """
+        return f"Patches object with {len(self)} patches."
+
+    def print_info(self):
+        """
+        Function to print all info contained in Patches.
+        """
+        print(f"There are {len(self)} patches:")
+        print("--------------------------------")
+        for i, patch in enumerate(self.list_of_patches):
+            print(f"Patch index:\t{i}")
+            patch.print_info()
+            print("-----------------")
 
     def __add__(self, to_be_added):
         """
@@ -58,10 +84,17 @@ class Patches:
             for patch in to_be_added:
                 for i in range(len(patch.interacts_with)):
                     patch.interacts_with[i] += n_to_add
-            self.list_of_patches += to_be_added
+
+            new_patches = copy.deepcopy(self)
+            for patch in to_be_added:
+                new_patches.list_of_patches.append(copy.copy(patch))
+
+            return new_patches
         elif isinstance(to_be_added, Patch):
             # we have a Patch object
-            self.list_of_patches.append(to_be_added)
+            new_patches = copy.deepcopy(self)
+            new_patches.list_of_patches.append(copy.copy(to_be_added))
+            return new_patches
         else:
             raise TypeError
 
@@ -197,3 +230,13 @@ class Patches:
                 adjacency[i,j] = 1
 
         return adjacency
+
+    def update_interaction_indices(self, indices):
+        translation = {ind:i for i, ind in enumerate(indices)}
+        for patch in self.list_of_patches:
+            interacts_with = []
+            for j in patch.interacts_with:
+                if j in indices:
+                    interacts_with.append(translation[j])
+            patch.interacts_with = interacts_with
+        
